@@ -1,6 +1,7 @@
 import fs from "fs";
 import fspromises from "fs/promises";
 import express, { Request, Response } from "express";
+import moment from "moment";
 import { parse } from "csv-parse";
 import { uploadCsv } from "@/config";
 import { getPath } from "@/helpers";
@@ -12,11 +13,14 @@ const router = express.Router();
 
 router.get('/', getIndexPage);
 router.post('/save-csv', saveCsv);
+router.get('/delete-csv/:id', deleteCsv);
 
 // route handlers
 
-function getIndexPage(req: Request, res: Response) {
-    return res.render('home/index');
+async function getIndexPage(req: Request, res: Response) {
+    const result = await csvService.getAllCsv();
+    const csvList = result.data;
+    return res.render('home/index', { csvList, moment });
 }
 
 
@@ -62,7 +66,7 @@ function saveCsv(req: Request, res: Response) {
             await csvService.addCsv(req.file!.originalname, contents);
             await fspromises.unlink(filePath);
 
-            req.setFlashMessage('CSV file uploaded successfully');
+            req.setFlashMessage('File uploaded successfully');
             return res.redirect('back');
 
 
@@ -71,5 +75,12 @@ function saveCsv(req: Request, res: Response) {
     });
 }
 
+
+async function deleteCsv(req: Request, res: Response) {
+    const id = req.params.id;
+    await csvService.deleteCsv(id);
+    req.setFlashMessage('File deleted successfully');
+    return res.redirect('back');
+}
 
 export { router };
