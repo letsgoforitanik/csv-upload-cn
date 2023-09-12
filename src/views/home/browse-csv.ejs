@@ -1,0 +1,23 @@
+<%
+    viewBag.pageTitle = 'Browse CSV';
+%>
+
+<%- contentFor('script') %>
+<script>var csvFileId = "<%= fileId %>"; </script>
+<script src="/js/csv-content.js" type="module"></script>  
+
+<%- contentFor('body') %>
+<div class="container-fluid">
+    <div class="table-container">
+
+        <h1 class="display-6">
+            <strong id="strong-heading">Loading, Please Wait ....</strong>
+        </h1>
+    
+        <div id="table-parent">
+            <table class="table table-striped" id="csv-content"></table>
+        </div>
+    
+    </div>
+</div>
+

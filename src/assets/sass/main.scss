@@ -7,26 +7,29 @@ body {
         display: none;
     }
 
-    main > div.container {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        min-height: calc(100vh - 106px);
-
-        div.table-container {
+    main {
+        div.container-fluid,
+        div.container {
             width: 100%;
+            display: flex;
+            justify-content: center;
+            min-height: calc(100vh - 106px);
 
-            h1 {
-                margin-top: 30px;
-                margin-bottom: 30px;
-                display: flex;
-                align-items: center;
-                column-gap: 70px;
+            div.table-container {
+                width: 100%;
 
-                small {
-                    margin-left: -30px;
-                    font-size: 14px;
-                    color: #dc3545;
+                h1 {
+                    margin-top: 30px;
+                    margin-bottom: 30px;
+                    display: flex;
+                    align-items: center;
+                    column-gap: 70px;
+
+                    small {
+                        margin-left: -30px;
+                        font-size: 14px;
+                        color: #dc3545;
+                    }
                 }
             }
         }

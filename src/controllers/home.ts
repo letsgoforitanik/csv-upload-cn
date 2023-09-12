@@ -14,6 +14,7 @@ const router = express.Router();
 router.get('/', getIndexPage);
 router.post('/save-csv', saveCsv);
 router.get('/delete-csv/:id', deleteCsv);
+router.get('/browse-csv/:id', getBrowseCsvPage);
 
 // route handlers
 
@@ -82,5 +83,12 @@ async function deleteCsv(req: Request, res: Response) {
     req.setFlashMessage('File deleted successfully');
     return res.redirect('back');
 }
+
+
+function getBrowseCsvPage(req: Request, res: Response) {
+    const fileId = req.params.id;
+    return res.render('home/browse-csv', { fileId });
+}
+
 
 export { router };
