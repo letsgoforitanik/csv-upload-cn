@@ -18,9 +18,6 @@ flUploadFile.onchange = function () {
         return;
     }
 
-    console.log(file);
-    console.log(file.size);
-
     if (file.size === 0) {
         smInvalidFeedback.innerText = "Upload non-empty .csv file";
         return;
