@@ -2,9 +2,10 @@ const heading = document.querySelector('#heading')! as HTMLElement;
 const tableCsvContent = document.querySelector('#csv-content')! as HTMLTableElement;
 
 declare var csvFileId: string;
-
 let contents: any[] = [];
-let filteredContents: any[] = [];
+let searchTerm: string = '';
+
+// html generator functions
 
 function setHeading(fileName: string) {
 
@@ -21,36 +22,12 @@ function setHeading(fileName: string) {
     const txtSearch = heading.querySelector('input')!;
 
     txtSearch.onchange = function () {
-
-        const searchTerm = txtSearch.value;
-
-        if (!searchTerm) {
-            filteredContents = contents;
-            return renderTableBody();
-        }
-
-        const filtered: any[] = [];
-
-        for (const content of contents) {
-
-            for (const key in content) {
-
-                const value = content[key];
-
-                if (value.includes(searchTerm)) {
-                    filtered.push(content);
-                    break;
-                }
-
-            }
-        }
-
-        filteredContents = filtered;
+        searchTerm = txtSearch.value;
         renderTableBody();
-
-    };
+    }
 
 }
+
 
 function getTableHeader() {
     const tHead = document.createElement('thead');
@@ -70,9 +47,46 @@ function getTableHeader() {
 }
 
 
+// filter functions
+
+
+function getSearchedContents(contents: any[]) {
+
+    if (!searchTerm) return contents;
+
+    const filtered = [];
+
+    for (const content of contents) {
+
+        for (const key in content) {
+
+            const value = content[key];
+
+            if (value.includes(searchTerm)) {
+                filtered.push(content);
+                break;
+            }
+
+        }
+    }
+
+    return filtered;
+
+}
+
+// render functions
+
+function renderTableHeader() {
+    const tHead = getTableHeader();
+    tableCsvContent.appendChild(tHead);
+}
+
+
 function renderTableBody() {
 
-    if (filteredContents.length === 0) return;
+    let filteredContents = contents;
+
+    filteredContents = getSearchedContents(filteredContents);
 
     tableCsvContent.querySelector('tbody')?.remove();
 
@@ -97,7 +111,7 @@ function renderTableBody() {
 
 }
 
-
+// csv loading functions
 
 async function loadCsv() {
 
@@ -107,16 +121,12 @@ async function loadCsv() {
     if (!result.success) return;
 
     contents = result.data.contents;
-    filteredContents = contents;
 
     if (contents.length === 0) return;
 
     setHeading(result.data.fileName);
 
-    const tHead = getTableHeader();
-
-    tableCsvContent.appendChild(tHead);
-
+    renderTableHeader();
     renderTableBody();
 
 }
