@@ -1,7 +1,58 @@
-const strHeading = document.querySelector('#strong-heading')! as HTMLElement;
+const heading = document.querySelector('#heading')! as HTMLElement;
 const tableCsvContent = document.querySelector('#csv-content')! as HTMLTableElement;
 
-function getTableHeader(contents: any[]) {
+declare var csvFileId: string;
+
+let contents: any[] = [];
+let filteredContents: any[] = [];
+
+function setHeading(fileName: string) {
+
+    heading.classList.add('d-flex', 'justify-content-between');
+
+    const html = `  <strong>File Content : ${fileName}</strong>
+                    <div id="search-bar" class="d-flex">
+                        <input class="form-control me-2" type="search" placeholder="Search">
+                        <button class="btn btn-outline-success" type="submit">Search</button>
+                    </div>`;
+
+    heading.innerHTML = html;
+
+    const txtSearch = heading.querySelector('input')!;
+
+    txtSearch.onchange = function () {
+
+        const searchTerm = txtSearch.value;
+
+        if (!searchTerm) {
+            filteredContents = contents;
+            return renderTableBody();
+        }
+
+        const filtered: any[] = [];
+
+        for (const content of contents) {
+
+            for (const key in content) {
+
+                const value = content[key];
+
+                if (value.includes(searchTerm)) {
+                    filtered.push(content);
+                    break;
+                }
+
+            }
+        }
+
+        filteredContents = filtered;
+        renderTableBody();
+
+    };
+
+}
+
+function getTableHeader() {
     const tHead = document.createElement('thead');
     const tr = document.createElement('tr');
 
@@ -19,37 +70,34 @@ function getTableHeader(contents: any[]) {
 }
 
 
-function getTableBody(contents: any[]) {
-    const tBody = document.createElement('tbody');
-    const headers = Object.keys(contents[0]);
+function renderTableBody() {
 
-    for (let i = 0; i < contents.length; i++) {
+    if (filteredContents.length === 0) return;
+
+    tableCsvContent.querySelector('tbody')?.remove();
+
+    const tBody = document.createElement('tbody');
+    const headers = Object.keys(filteredContents[0]);
+
+    for (let i = 0; i < filteredContents.length; i++) {
         const tr = document.createElement('tr');
         tBody.appendChild(tr);
 
         let tdString = `<th scope="row">${i + 1}</th>`;
 
         for (const header of headers) {
-            const value = contents[i][header];
+            const value = filteredContents[i][header];
             tdString += `<td>${value}</td>`;
         }
 
         tr.innerHTML = tdString;
     }
 
-    return tBody;
-}
-
-function renderTable(contents: any[]) {
-    const tHead = getTableHeader(contents);
-    const tBody = getTableBody(contents);
-
-    tableCsvContent.appendChild(tHead);
     tableCsvContent.appendChild(tBody);
+
 }
 
 
-declare var csvFileId: string;
 
 async function loadCsv() {
 
@@ -58,14 +106,20 @@ async function loadCsv() {
 
     if (!result.success) return;
 
-    const { fileName, contents } = result.data;
-
-    strHeading.innerText = `File Content : ${fileName}`;
+    contents = result.data.contents;
+    filteredContents = contents;
 
     if (contents.length === 0) return;
 
-    renderTable(contents);
+    setHeading(result.data.fileName);
+
+    const tHead = getTableHeader();
+
+    tableCsvContent.appendChild(tHead);
+
+    renderTableBody();
 
 }
+
 
 loadCsv();
