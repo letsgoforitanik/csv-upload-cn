@@ -1,11 +1,54 @@
 const heading = document.querySelector('#heading')! as HTMLElement;
 const tableCsvContent = document.querySelector('#csv-content')! as HTMLTableElement;
+const ulPaging = document.querySelector('.pagination')! as HTMLUListElement;
 
 declare var csvFileId: string;
+
+const dataPerPage = 10;
+
 let contents: any[] = [];
 let searchTerm: string = '';
+let pageNo = 1;
+
 
 // html generator functions
+
+function setPaging(dataLength: number) {
+
+    const noOfPages = Math.ceil(dataLength / dataPerPage);
+
+    let liHtml = '';
+
+    for (let i = 1; i <= noOfPages; i++) {
+        liHtml += `<li class="page-item ${i === pageNo ? 'active' : ''}">
+                        <a class="page-link" href="#">${i}</a>
+                    </li>`;
+    }
+
+    const html = `  <li class="page-item">
+                        <a class="page-link" href="#">Previous</a>
+                    </li>
+                    ${liHtml}
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>`;
+
+    ulPaging.innerHTML = html;
+    ulPaging.querySelectorAll('li a').forEach((a: any) => a.onclick = handlePaging);
+
+    function handlePaging(event: Event) {
+        const anchor = event.target as HTMLAnchorElement;
+        const anchorText = anchor.innerText;
+
+        if (anchorText === 'Previous') pageNo > 1 && pageNo--;
+        else if (anchorText === 'Next') pageNo < noOfPages && pageNo++;
+        else pageNo = Number(anchorText);
+
+        renderTableBody();
+    }
+
+}
+
 
 function setHeading(fileName: string) {
 
@@ -23,6 +66,7 @@ function setHeading(fileName: string) {
 
     txtSearch.onchange = function () {
         searchTerm = txtSearch.value;
+        pageNo = 1;
         renderTableBody();
     }
 
@@ -48,6 +92,19 @@ function getTableHeader() {
 
 
 // filter functions
+
+function getPagedContents(contents: any[]) {
+    const startIndex = (pageNo - 1) * dataPerPage;
+    const endIndex = Math.min(startIndex + dataPerPage - 1, contents.length - 1);
+
+    const pagedContents = [];
+
+    for (let i = startIndex; i <= endIndex; i++) {
+        pagedContents.push(contents[i]);
+    }
+
+    return pagedContents;
+}
 
 
 function getSearchedContents(contents: any[]) {
@@ -87,6 +144,10 @@ function renderTableBody() {
     let filteredContents = contents;
 
     filteredContents = getSearchedContents(filteredContents);
+
+    setPaging(filteredContents.length);
+
+    filteredContents = getPagedContents(filteredContents);
 
     tableCsvContent.querySelector('tbody')?.remove();
 
@@ -130,6 +191,5 @@ async function loadCsv() {
     renderTableBody();
 
 }
-
 
 loadCsv();
