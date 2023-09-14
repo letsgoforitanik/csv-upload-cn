@@ -48,6 +48,14 @@ function saveCsv(req: Request, res: Response) {
 
         parser.on('data', data => result.push(data));
 
+        parser.on('error', async () => {
+            stream.close();
+            await fspromises.unlink(filePath);
+
+            req.setFlashErrors('Parsing error. Try different file');
+            return res.redirect('back');
+        });
+
         parser.on('end', async () => {
 
             const contents: any[] = [];

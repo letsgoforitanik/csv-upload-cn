@@ -1,8 +1,16 @@
 const heading = document.querySelector('#heading')! as HTMLElement;
 const tableCsvContent = document.querySelector('#csv-content')! as HTMLTableElement;
 const ulPaging = document.querySelector('.pagination')! as HTMLUListElement;
+const canvas = document.querySelector('#canvas')! as HTMLCanvasElement;
+const divModal = document.querySelector('#modalCharting')! as HTMLDivElement;
+const modalTitle = divModal.querySelector('.modal-title')! as HTMLHeadingElement;
+const pNote = document.querySelector('#note')! as HTMLParagraphElement;
+
+const modal = new bootstrap.Modal(divModal, { keyboard: false });
 
 declare var csvFileId: string;
+declare var bootstrap: any;
+declare var Chart: any;
 
 const dataPerPage = 10;
 
@@ -11,6 +19,54 @@ let searchTerm: string = '';
 let pageNo: number = 1;
 let sortColumnName: string | null = null;
 let sortOrder: 'asc' | 'desc' = 'asc';
+
+/////////////////////////////////////////////////
+
+// charting function 
+
+function handleCharting(columnName: string) {
+
+    const columnData = contents.map(content => content[columnName]);
+
+    const map: { [key: string]: number } = {};
+
+    for (let d of columnData) {
+        if (!map[d]) map[d] = 1;
+        else map[d]++;
+    }
+
+    const keys = [];
+    const values = [];
+
+    for (let key in map) {
+        keys.push(key);
+        values.push(map[key] / columnData.length * 100);
+    }
+
+    const data = {
+        labels: keys,
+        datasets: [{ data: values }]
+    };
+
+    const options = { responsive: true, maintainAspectRatio: false };
+
+    const ctx = canvas.getContext("2d");
+
+    const pieChart = new Chart(ctx, { type: 'pie', data, options });
+
+    modalTitle.innerText = `${columnName} Pie Chart`;
+
+    divModal.addEventListener('hidden.bs.modal', closeModal);
+
+    function closeModal() {
+        divModal.removeEventListener('hidden.bs.modal', closeModal);
+        pieChart.destroy();
+    }
+
+
+    modal.show();
+
+}
 
 
 // html generator functions
@@ -56,13 +112,15 @@ function setHeading(fileName: string) {
 
     heading.classList.add('d-flex', 'justify-content-between');
 
-    const html = `  <strong>File Content : ${fileName}</strong>
+    const html = `  <strong>File Content : ${fileName}</strong>                    
                     <div id="search-bar" class="d-flex">
                         <input class="form-control me-2" type="search" placeholder="Search">
                         <button class="btn btn-outline-success" type="submit">Search</button>
                     </div>`;
 
     heading.innerHTML = html;
+
+    pNote.innerText = 'Double click on any table header to view pie chart';
 
     const txtSearch = heading.querySelector('input')!;
 
@@ -74,42 +132,6 @@ function setHeading(fileName: string) {
         renderTable();
     }
 
-}
-
-
-function getTableHeader() {
-
-    const tHead = document.createElement('thead');
-    const tr = document.createElement('tr');
-
-    tHead.appendChild(tr);
-
-    let thString = '<th scope="col">#</th>';
-
-    for (const key in contents[0]) {
-        thString += `<th scope="col" class="${sortColumnName !== key ? '' : sortOrder}" >${key}</th>`;
-    }
-
-    tr.innerHTML = thString;
-
-    tr.querySelectorAll('th').forEach((th: any, index) => th.onclick = () => handleSorting(th.innerText));
-
-    function handleSorting(columnName: string) {
-
-        if (sortColumnName !== columnName) {
-            sortColumnName = columnName;
-            sortOrder = 'asc';
-        }
-        else {
-            if (sortOrder === 'asc') sortOrder = 'desc';
-            else sortOrder = 'asc';
-        }
-
-        renderTable();
-
-    }
-
-    return tHead;
 }
 
 
@@ -156,11 +178,9 @@ function getSearchedContents(contents: any[]) {
 
 function getSortedContents(contents: any[]) {
 
-    if (!sortColumnName) return contents;
+    if (!sortColumnName || sortColumnName === '#') return contents;
 
     contents.sort((first, second) => {
-
-        if (sortColumnName === '#') return 0;
 
         const order = sortOrder === 'asc' ? 1 : -1;
 
@@ -184,7 +204,7 @@ function getSortedContents(contents: any[]) {
 
 }
 
-// render functions
+// render function
 
 function renderTable() {
 
@@ -205,7 +225,24 @@ function renderTable() {
 
     tr.innerHTML = thString;
 
-    tr.querySelectorAll('th').forEach((th: any, index) => th.onclick = () => handleSorting(th.innerText));
+    let clickCount = 0, timeoutId: any = null;
+
+    tr.querySelectorAll('th').forEach((th: any) => th.onclick = () => {
+        clickCount++;
+        timeoutId && clearTimeout(timeoutId);
+
+        timeoutId = setTimeout(() => {
+            timeoutId = null;
+            let count = clickCount;
+            clickCount = 0;
+
+            if (count === 1) handleSorting(th.innerText);
+            else handleCharting(th.innerText);
+
+
+        }, 500);
+    });
+
 
     function handleSorting(columnName: string) {
 
@@ -224,7 +261,7 @@ function renderTable() {
 
     tableCsvContent.appendChild(tHead);
 
-    // table body ======================================================
+    // table body =============================================
 
     let filteredContents = contents;
 

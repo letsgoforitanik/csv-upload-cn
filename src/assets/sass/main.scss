@@ -37,6 +37,15 @@ body {
                     margin: 30px auto;
                 }
 
+                p#note {
+                    font-size: 12px;
+                    font-style: italic;
+                    color: #ff000a;
+                    font-weight: bold;
+                    text-align: center;
+                    margin-bottom: 12px;
+                }
+
                 table.sortable > thead > tr > th {
                     background-image: url("/images/bg.gif");
                     background-repeat: no-repeat;
@@ -50,6 +59,10 @@ body {
 
                     &.desc {
                         background-image: url("/images/desc.gif");
+                    }
+
+                    &:first-child {
+                        background-image: none;
                     }
                 }
             }
