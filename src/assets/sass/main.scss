@@ -36,6 +36,22 @@ body {
                     width: fit-content;
                     margin: 30px auto;
                 }
+
+                table.sortable > thead > tr > th {
+                    background-image: url("/images/bg.gif");
+                    background-repeat: no-repeat;
+                    background-position: center right;
+                    cursor: pointer;
+                    border: 1px solid #fff;
+
+                    &.asc {
+                        background-image: url("/images/asc.gif");
+                    }
+
+                    &.desc {
+                        background-image: url("/images/desc.gif");
+                    }
+                }
             }
         }
     }

@@ -8,7 +8,9 @@ const dataPerPage = 10;
 
 let contents: any[] = [];
 let searchTerm: string = '';
-let pageNo = 1;
+let pageNo: number = 1;
+let sortColumnName: string | null = null;
+let sortOrder: 'asc' | 'desc' = 'asc';
 
 
 // html generator functions
@@ -44,7 +46,7 @@ function setPaging(dataLength: number) {
         else if (anchorText === 'Next') pageNo < noOfPages && pageNo++;
         else pageNo = Number(anchorText);
 
-        renderTableBody();
+        renderTable();
     }
 
 }
@@ -67,13 +69,16 @@ function setHeading(fileName: string) {
     txtSearch.onchange = function () {
         searchTerm = txtSearch.value;
         pageNo = 1;
-        renderTableBody();
+        sortColumnName = null;
+        sortOrder = 'asc';
+        renderTable();
     }
 
 }
 
 
 function getTableHeader() {
+
     const tHead = document.createElement('thead');
     const tr = document.createElement('tr');
 
@@ -82,10 +87,27 @@ function getTableHeader() {
     let thString = '<th scope="col">#</th>';
 
     for (const key in contents[0]) {
-        thString += `<th scope="col">${key}</th>`;
+        thString += `<th scope="col" class="${sortColumnName !== key ? '' : sortOrder}" >${key}</th>`;
     }
 
     tr.innerHTML = thString;
+
+    tr.querySelectorAll('th').forEach((th: any, index) => th.onclick = () => handleSorting(th.innerText));
+
+    function handleSorting(columnName: string) {
+
+        if (sortColumnName !== columnName) {
+            sortColumnName = columnName;
+            sortOrder = 'asc';
+        }
+        else {
+            if (sortOrder === 'asc') sortOrder = 'desc';
+            else sortOrder = 'asc';
+        }
+
+        renderTable();
+
+    }
 
     return tHead;
 }
@@ -131,25 +153,88 @@ function getSearchedContents(contents: any[]) {
 
 }
 
-// render functions
 
-function renderTableHeader() {
-    const tHead = getTableHeader();
-    tableCsvContent.appendChild(tHead);
+function getSortedContents(contents: any[]) {
+
+    if (!sortColumnName) return contents;
+
+    contents.sort((first, second) => {
+
+        if (sortColumnName === '#') return 0;
+
+        const order = sortOrder === 'asc' ? 1 : -1;
+
+        const firstValue = first[sortColumnName!];
+        const secondValue = second[sortColumnName!];
+
+        if (!isNaN(firstValue)) {
+            const firstNumber = Number(firstValue);
+            const secondNumber = Number(secondValue);
+            return firstNumber - secondNumber * order;
+        }
+
+        const sortValue = firstValue < secondValue ? -1 : firstValue > secondValue ? 1 : 0;
+
+        return sortValue * order;
+
+    });
+
+    return contents;
+
+
 }
 
+// render functions
 
-function renderTableBody() {
+function renderTable() {
+
+    tableCsvContent.innerHTML = '';
+
+    // table head =============================================
+
+    const tHead = document.createElement('thead');
+    const tr = document.createElement('tr');
+
+    tHead.appendChild(tr);
+
+    let thString = '<th scope="col">#</th>';
+
+    for (const key in contents[0]) {
+        thString += `<th scope="col" class="${sortColumnName !== key ? '' : sortOrder}" >${key}</th>`;
+    }
+
+    tr.innerHTML = thString;
+
+    tr.querySelectorAll('th').forEach((th: any, index) => th.onclick = () => handleSorting(th.innerText));
+
+    function handleSorting(columnName: string) {
+
+        if (sortColumnName !== columnName) {
+            sortColumnName = columnName;
+            sortOrder = 'asc';
+        }
+        else {
+            if (sortOrder === 'asc') sortOrder = 'desc';
+            else sortOrder = 'asc';
+        }
+
+        renderTable();
+
+    }
+
+    tableCsvContent.appendChild(tHead);
+
+    // table body ======================================================
 
     let filteredContents = contents;
 
     filteredContents = getSearchedContents(filteredContents);
 
+    filteredContents = getSortedContents(filteredContents);
+
     setPaging(filteredContents.length);
 
     filteredContents = getPagedContents(filteredContents);
-
-    tableCsvContent.querySelector('tbody')?.remove();
 
     const tBody = document.createElement('tbody');
     const headers = Object.keys(filteredContents[0]);
@@ -187,8 +272,7 @@ async function loadCsv() {
 
     setHeading(result.data.fileName);
 
-    renderTableHeader();
-    renderTableBody();
+    renderTable();
 
 }
 

@@ -10,6 +10,7 @@ gulp.task('ts:browser->js', () => gulpRun(`tsc --project src/assets/ts/tsconfig.
 gulp.task('ts:server->js', () => gulpRun(`tsc && tsc-alias`).exec());
 gulp.task('sass->css', () => gulpRun(`sass --no-source-map src/assets/sass:dist/public/css`).exec());
 gulp.task('copy:ejs', () => gulp.src('src/views/**/*.ejs').pipe(gulp.dest('dist/views')));
+gulp.task('copy:images', () => gulp.src('src/assets/**/*').pipe(gulp.dest('dist/public')));
 gulp.task('minify:css', () => gulp.src('dist/public/css/**/*.css').pipe(minify()).pipe(gulp.dest('dist/public/css')));
 gulp.task('uglify:js', () => gulp.src('dist/public/js/**/*.js').pipe(uglify()).pipe(gulp.dest('dist/public/js')));
 
@@ -21,6 +22,7 @@ const tasklist = [
     'ts:server->js',
     'sass->css',
     'copy:ejs',
+    'copy:images',
     'minify:css',
     'uglify:js'
 ];
