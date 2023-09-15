@@ -1,3 +1,5 @@
+import { isValidDate, isNumber } from './lib.js';
+
 const heading = document.querySelector('#heading')! as HTMLElement;
 const tableCsvContent = document.querySelector('#csv-content')! as HTMLTableElement;
 const ulPaging = document.querySelector('.pagination')! as HTMLUListElement;
@@ -108,7 +110,7 @@ function setPaging(dataLength: number) {
 }
 
 
-function setHeading(fileName: string) {
+function setPageIntro(fileName: string) {
 
     heading.classList.add('d-flex', 'justify-content-between');
 
@@ -120,7 +122,7 @@ function setHeading(fileName: string) {
 
     heading.innerHTML = html;
 
-    pNote.innerText = 'Double click on any table header to view pie chart';
+    pNote.innerText = '** Double click on any table header to view pie chart **';
 
     const txtSearch = heading.querySelector('input')!;
 
@@ -180,18 +182,24 @@ function getSortedContents(contents: any[]) {
 
     if (!sortColumnName || sortColumnName === '#') return contents;
 
+
     contents.sort((first, second) => {
 
         const order = sortOrder === 'asc' ? 1 : -1;
 
-        const firstValue = first[sortColumnName!];
-        const secondValue = second[sortColumnName!];
+        let firstValue = first[sortColumnName!];
+        let secondValue = second[sortColumnName!];
 
-        if (!isNaN(firstValue)) {
-            const firstNumber = Number(firstValue);
-            const secondNumber = Number(secondValue);
-            return firstNumber - secondNumber * order;
+        if (isNumber(firstValue)) {
+            firstValue = Number(firstValue);
+            secondValue = Number(secondValue);
         }
+
+        if (isValidDate(firstValue)) {
+            firstValue = new Date(firstValue);
+            secondValue = new Date(secondValue);
+        }
+
 
         const sortValue = firstValue < secondValue ? -1 : firstValue > secondValue ? 1 : 0;
 
@@ -225,7 +233,7 @@ function renderTable() {
 
     tr.innerHTML = thString;
 
-    let clickCount = 0, timeoutId: any = null;
+    let clickCount: number = 0, timeoutId: any = null;
 
     tr.querySelectorAll('th').forEach((th: any) => th.onclick = () => {
         clickCount++;
@@ -307,7 +315,7 @@ async function loadCsv() {
 
     if (contents.length === 0) return;
 
-    setHeading(result.data.fileName);
+    setPageIntro(result.data.fileName);
 
     renderTable();
 
