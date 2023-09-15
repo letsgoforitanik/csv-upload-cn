@@ -18,6 +18,8 @@ let pageNo: number = 1;
 let sortColumnName: string | null = null;
 let sortOrder: 'asc' | 'desc' = 'asc';
 
+
+
 // filter handlers
 
 function handleSearching(searchTerm: string) {
@@ -38,6 +40,7 @@ function handlePaging(currentPageNo: number) {
     pagedContents = fn.getPagedContents(filteredContents, pageNo, dataPerPage);
     render();
 }
+
 
 // html generator functions
 
@@ -60,6 +63,7 @@ function setPageIntro(fileName: string) {
     txtSearch.onchange = () => handleSearching(txtSearch.value);
 
 }
+
 
 
 // render functions
@@ -178,7 +182,7 @@ function renderTable() {
     renderTableBody();
 }
 
-
+// react style render function 
 function render() {
     renderPager();
     renderTable();

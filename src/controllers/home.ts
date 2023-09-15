@@ -18,13 +18,20 @@ router.get('/browse-csv/:id', getBrowseCsvPage);
 
 // route handlers
 
+// Page that lists all .csv files that have been uploaded
 async function getIndexPage(req: Request, res: Response) {
     const result = await csvService.getAllCsv();
     const csvList = result.data;
     return res.render('home/index', { csvList, moment });
 }
 
-
+// This method first uploads the file, if during uploading
+// any error occurs, it reports to the client. After uploading,
+// it tries to parse the file content using csv-parser. If parsing
+// fails, it removes the uploaded file and reports to client.
+// If it becomes successful in parsing, it transforms the file content
+// into an array of objects, and stores the content in database, along
+// with original file name and upload date and time. 
 function saveCsv(req: Request, res: Response) {
 
     uploadCsv(req, res, async function (error) {
@@ -84,7 +91,7 @@ function saveCsv(req: Request, res: Response) {
     });
 }
 
-
+// Delete uploaded .csv file
 async function deleteCsv(req: Request, res: Response) {
     const id = req.params.id;
     await csvService.deleteCsv(id);
@@ -92,7 +99,7 @@ async function deleteCsv(req: Request, res: Response) {
     return res.redirect('back');
 }
 
-
+// Get csv-browser page
 function getBrowseCsvPage(req: Request, res: Response) {
     const fileId = req.params.id;
     return res.render('home/browse-csv', { fileId });

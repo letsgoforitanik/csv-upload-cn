@@ -6,8 +6,8 @@ import flash from "connect-flash";
 
 import controllerRouter from "@/controllers";
 import { environment, initializeDb, sessionConfig } from "@/config";
-import { locals } from "@/middlewares";
-import { extendExpress, getPath } from "@/helpers";
+import { locals, errorHandler } from "@/middlewares";
+import { extendExpress, getPath, trycatchify } from "@/helpers";
 
 
 function configureAppSettings(app: Express) {
@@ -26,6 +26,7 @@ function configureApp(app: Express) {
     app.use(flash());
     app.use(locals);
     app.use(controllerRouter);
+    app.use(errorHandler);
 }
 
 async function main() {
@@ -38,6 +39,8 @@ async function main() {
 
     configureApp(app);
     configureAppSettings(app);
+
+    trycatchify(app);
 
     await initializeDb();
     console.log(`Database connection is made successfully`);

@@ -8,6 +8,11 @@ const canvas = document.querySelector('#canvas')! as HTMLCanvasElement;
 const modal = new bootstrap.Modal(divModal, { keyboard: false });
 
 
+// This method shows pie chart in a modal. This method accepts two
+// arguments. First one being contents and second one being column
+// name. It first maps the required contents in an array. It then counts
+// frequency of elements in the array and finally represents the items
+// their frequenecies in percentage in a pie chart.
 export default function showChart(contents: any[], columnName: string) {
 
     const columnData = contents.map(content => content[columnName]);

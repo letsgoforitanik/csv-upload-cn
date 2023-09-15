@@ -5,6 +5,7 @@ const formUpload = document.querySelector('#form-upload')! as HTMLFormElement;
 
 btnUploadFile.onclick = () => flUploadFile.click();
 
+// This method uploads csv file to server that is non-empty
 flUploadFile.onchange = function () {
 
     if (!flUploadFile.files || flUploadFile.files.length === 0) return;
