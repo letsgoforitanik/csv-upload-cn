@@ -1,81 +1,72 @@
-import { isValidDate, isNumber } from './lib.js';
+import * as fn from "./functions.js";
+import showChart from "./chart.js";
 
 const heading = document.querySelector('#heading')! as HTMLElement;
 const tableCsvContent = document.querySelector('#csv-content')! as HTMLTableElement;
 const ulPaging = document.querySelector('.pagination')! as HTMLUListElement;
-const canvas = document.querySelector('#canvas')! as HTMLCanvasElement;
-const divModal = document.querySelector('#modalCharting')! as HTMLDivElement;
-const modalTitle = divModal.querySelector('.modal-title')! as HTMLHeadingElement;
 const pNote = document.querySelector('#note')! as HTMLParagraphElement;
 
-const modal = new bootstrap.Modal(divModal, { keyboard: false });
-
 declare var csvFileId: string;
-declare var bootstrap: any;
-declare var Chart: any;
 
 const dataPerPage = 10;
 
 let contents: any[] = [];
-let searchTerm: string = '';
+let filteredContents: any[] = [];
+let pagedContents: any[] = [];
+
 let pageNo: number = 1;
 let sortColumnName: string | null = null;
 let sortOrder: 'asc' | 'desc' = 'asc';
 
-/////////////////////////////////////////////////
+// filter handlers
 
-// charting function 
-
-function handleCharting(columnName: string) {
-
-    const columnData = contents.map(content => content[columnName]);
-
-    const map: { [key: string]: number } = {};
-
-    for (let d of columnData) {
-        if (!map[d]) map[d] = 1;
-        else map[d]++;
-    }
-
-    const keys = [];
-    const values = [];
-
-    for (let key in map) {
-        keys.push(key);
-        values.push(map[key] / columnData.length * 100);
-    }
-
-    const data = {
-        labels: keys,
-        datasets: [{ data: values }]
-    };
-
-    const options = { responsive: true, maintainAspectRatio: false };
-
-    const ctx = canvas.getContext("2d");
-
-    const pieChart = new Chart(ctx, { type: 'pie', data, options });
-
-    modalTitle.innerText = `${columnName} Pie Chart`;
-
-    divModal.addEventListener('hidden.bs.modal', closeModal);
-
-    function closeModal() {
-        divModal.removeEventListener('hidden.bs.modal', closeModal);
-        pieChart.destroy();
-    }
+function handleSearching(searchTerm: string) {
+    filteredContents = fn.getSearchedContents(contents, searchTerm);
+    handleSorting(null, 'asc');
+}
 
 
-    modal.show();
+function handleSorting(column: string | null, order: 'asc' | 'desc') {
+    sortColumnName = column;
+    sortOrder = order;
+    filteredContents = fn.getSortedContents(filteredContents, sortColumnName, sortOrder);
+    handlePaging(1);
+}
+
+function handlePaging(currentPageNo: number) {
+    pageNo = currentPageNo;
+    pagedContents = fn.getPagedContents(filteredContents, pageNo, dataPerPage);
+    render();
+}
+
+// html generator functions
+
+function setPageIntro(fileName: string) {
+
+    heading.classList.add('d-flex', 'justify-content-between');
+
+    const html = `  <strong>File Content : ${fileName}</strong>                    
+                    <div id="search-bar" class="d-flex">
+                        <input class="form-control me-2" type="search" placeholder="Search">
+                        <button class="btn btn-outline-success" type="submit">Search</button>
+                    </div>`;
+
+    heading.innerHTML = html;
+
+    pNote.innerText = '** Double click on any table header to view pie chart **';
+
+    const txtSearch = heading.querySelector('input')!;
+
+    txtSearch.onchange = () => handleSearching(txtSearch.value);
 
 }
 
 
-// html generator functions
+// render functions
 
-function setPaging(dataLength: number) {
+function renderPager() {
 
-    const noOfPages = Math.ceil(dataLength / dataPerPage);
+    const noOfPages = Math.ceil(filteredContents.length / dataPerPage);
 
     let liHtml = '';
 
@@ -94,131 +85,22 @@ function setPaging(dataLength: number) {
                     </li>`;
 
     ulPaging.innerHTML = html;
-    ulPaging.querySelectorAll('li a').forEach((a: any) => a.onclick = handlePaging);
+    ulPaging.querySelectorAll('li a').forEach((a: any) => a.onclick = onPageClick);
 
-    function handlePaging(event: Event) {
+    function onPageClick(event: Event) {
         const anchor = event.target as HTMLAnchorElement;
         const anchorText = anchor.innerText;
 
-        if (anchorText === 'Previous') pageNo > 1 && pageNo--;
-        else if (anchorText === 'Next') pageNo < noOfPages && pageNo++;
-        else pageNo = Number(anchorText);
+        if (anchorText === 'Previous') pageNo > 1 && handlePaging(pageNo - 1);
+        else if (anchorText === 'Next') pageNo < noOfPages && handlePaging(pageNo + 1);
+        else handlePaging(Number(anchorText));
 
-        renderTable();
     }
 
 }
 
 
-function setPageIntro(fileName: string) {
-
-    heading.classList.add('d-flex', 'justify-content-between');
-
-    const html = `  <strong>File Content : ${fileName}</strong>                    
-                    <div id="search-bar" class="d-flex">
-                        <input class="form-control me-2" type="search" placeholder="Search">
-                        <button class="btn btn-outline-success" type="submit">Search</button>
-                    </div>`;
-
-    heading.innerHTML = html;
-
-    pNote.innerText = '** Double click on any table header to view pie chart **';
-
-    const txtSearch = heading.querySelector('input')!;
-
-    txtSearch.onchange = function () {
-        searchTerm = txtSearch.value;
-        pageNo = 1;
-        sortColumnName = null;
-        sortOrder = 'asc';
-        renderTable();
-    }
-
-}
-
-
-// filter functions
-
-function getPagedContents(contents: any[]) {
-    const startIndex = (pageNo - 1) * dataPerPage;
-    const endIndex = Math.min(startIndex + dataPerPage - 1, contents.length - 1);
-
-    const pagedContents = [];
-
-    for (let i = startIndex; i <= endIndex; i++) {
-        pagedContents.push(contents[i]);
-    }
-
-    return pagedContents;
-}
-
-
-function getSearchedContents(contents: any[]) {
-
-    if (!searchTerm) return contents;
-
-    const filtered = [];
-
-    for (const content of contents) {
-
-        for (const key in content) {
-
-            const value = content[key];
-
-            if (value.includes(searchTerm)) {
-                filtered.push(content);
-                break;
-            }
-
-        }
-    }
-
-    return filtered;
-
-}
-
-
-function getSortedContents(contents: any[]) {
-
-    if (!sortColumnName || sortColumnName === '#') return contents;
-
-
-    contents.sort((first, second) => {
-
-        const order = sortOrder === 'asc' ? 1 : -1;
-
-        let firstValue = first[sortColumnName!];
-        let secondValue = second[sortColumnName!];
-
-        if (isNumber(firstValue)) {
-            firstValue = Number(firstValue);
-            secondValue = Number(secondValue);
-        }
-
-        if (isValidDate(firstValue)) {
-            firstValue = new Date(firstValue);
-            secondValue = new Date(secondValue);
-        }
-
-
-        const sortValue = firstValue < secondValue ? -1 : firstValue > secondValue ? 1 : 0;
-
-        return sortValue * order;
-
-    });
-
-    return contents;
-
-
-}
-
-// render function
-
-function renderTable() {
-
-    tableCsvContent.innerHTML = '';
-
-    // table head =============================================
+function renderTableHeader() {
 
     const tHead = document.createElement('thead');
     const tr = document.createElement('tr');
@@ -236,62 +118,49 @@ function renderTable() {
     let clickCount: number = 0, timeoutId: any = null;
 
     tr.querySelectorAll('th').forEach((th: any) => th.onclick = () => {
+
+        if (th.innerText === '#') return;
+
         clickCount++;
         timeoutId && clearTimeout(timeoutId);
 
         timeoutId = setTimeout(() => {
+
             timeoutId = null;
             let count = clickCount;
             clickCount = 0;
 
-            if (count === 1) handleSorting(th.innerText);
-            else handleCharting(th.innerText);
-
+            if (count === 1) sort(th.innerText);
+            else showChart(filteredContents, th.innerText);
 
         }, 500);
+
     });
 
 
-    function handleSorting(columnName: string) {
-
-        if (sortColumnName !== columnName) {
-            sortColumnName = columnName;
-            sortOrder = 'asc';
-        }
-        else {
-            if (sortOrder === 'asc') sortOrder = 'desc';
-            else sortOrder = 'asc';
-        }
-
-        renderTable();
-
+    function sort(columnName: string) {
+        if (sortColumnName !== columnName) handleSorting(columnName, 'asc');
+        else handleSorting(sortColumnName, sortOrder === 'asc' ? 'desc' : 'asc');
     }
 
     tableCsvContent.appendChild(tHead);
 
-    // table body =============================================
+}
 
-    let filteredContents = contents;
 
-    filteredContents = getSearchedContents(filteredContents);
-
-    filteredContents = getSortedContents(filteredContents);
-
-    setPaging(filteredContents.length);
-
-    filteredContents = getPagedContents(filteredContents);
+function renderTableBody() {
 
     const tBody = document.createElement('tbody');
-    const headers = Object.keys(filteredContents[0]);
+    const headers = Object.keys(pagedContents[0]);
 
-    for (let i = 0; i < filteredContents.length; i++) {
+    for (let i = 0; i < pagedContents.length; i++) {
         const tr = document.createElement('tr');
         tBody.appendChild(tr);
 
         let tdString = `<th scope="row">${i + 1}</th>`;
 
         for (const header of headers) {
-            const value = filteredContents[i][header];
+            const value = pagedContents[i][header];
             tdString += `<td>${value}</td>`;
         }
 
@@ -301,6 +170,20 @@ function renderTable() {
     tableCsvContent.appendChild(tBody);
 
 }
+
+
+function renderTable() {
+    tableCsvContent.innerHTML = '';
+    renderTableHeader();
+    renderTableBody();
+}
+
+
+function render() {
+    renderPager();
+    renderTable();
+}
+
 
 // csv loading functions
 
@@ -317,7 +200,8 @@ async function loadCsv() {
 
     setPageIntro(result.data.fileName);
 
-    renderTable();
+    handleSearching('');
+
 
 }
 
