@@ -1,4 +1,4 @@
-import * as productService from "./product";
+import * as csvService from './csv';
 
 // service layer abstracts all the database related 
 // functionalities, so that consumers (i.e. controllers)
@@ -6,4 +6,4 @@ import * as productService from "./product";
 // this pattern is beneficial if later we change the database
 // provider. If in future, we change database, we won't have to make
 // changes in all the places. 
-export { productService };
+export { csvService };

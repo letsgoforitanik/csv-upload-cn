@@ -1,0 +1,58 @@
+<%
+    viewBag.pageTitle = 'Home';
+%>
+
+<%- contentFor('script') %>
+<script src="/js/upload-csv.js"></script>
+
+<%- contentFor('body') %>
+<div class="container">
+    <div class="table-container">
+
+        <h1 class="display-6">
+            <strong>CSV Documents</strong>
+            <button class="btn btn-success" id="upload-file-btn" type="button">Upload File (.csv)</button>
+            <small id="invalid-feedback"><%= errors && errors[''] %></small>
+        </h1>
+    
+        <form action="/save-csv" method="post" id="form-upload" enctype="multipart/form-data">
+            <input type="file" accept=".csv" id="file-upload-csv" name="file">
+        </form>
+    
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">File Name</th>
+                    <th scope="col">Upload Time</th>
+                    <th scope="col">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <% for (let i = 0; i < csvList.length; i++) { %>
+                        <tr>
+                            <th scope="row"><%= i + 1 %></th>
+                            <td><%= csvList[i].fileName %></td>
+                            <td><%= moment(csvList[i].uploadedAt).fromNow() %></td>
+                            <td>
+                                <a 
+                                    target="_blank" 
+                                    href="/browse-csv/<%= csvList[i].id %>">
+                                    Browse Content
+                                </a> | 
+                                <a 
+                                    onclick="return confirm('Do you want to delete?')"
+                                    href="/delete-csv/<%= csvList[i].id %>"
+                                    >
+                                    Delete File
+                                </a>
+                            </td>
+                        </tr>
+                    <% } %>
+                </tr>
+            </tbody>
+        </table>
+    
+    </div>
+</div>

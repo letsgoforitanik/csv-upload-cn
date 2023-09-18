@@ -1,9 +1,12 @@
 import express from "express";
-import { apiRouter } from "./api";
-
+import * as homeController from './home';
+import * as apiController from './api';
+import * as errorController from "./error";
 
 const controllerRouter = express.Router();
 
-controllerRouter.use("/api", apiRouter);
+controllerRouter.use(homeController.router);
+controllerRouter.use(apiController.router);
+controllerRouter.use(errorController.router);
 
-export { controllerRouter };
+export default controllerRouter;

@@ -1,3 +1,4 @@
+import locals from "./locals";
 import errorHandler from "./error-handler";
 
-export { errorHandler };
+export { locals, errorHandler };

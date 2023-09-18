@@ -1,5 +1,6 @@
 // model types
-export interface IProduct {
-    name: string;
-    quantity: number;
+
+export interface ICSV {
+    fileName: string;
+    contents: any[];
 }
