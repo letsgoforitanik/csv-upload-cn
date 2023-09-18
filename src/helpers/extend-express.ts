@@ -1,34 +1,38 @@
 import express from "express";
+import { ZodError } from "zod";
 
+// helper methods
 export default function extendExpress() {
 
-    // This helper method serializes errors and set them in flash
-    // it also serializes the current request body in flash
-    // serialized values are deserialized by the 'locals' middleware
-    express.request.setFlashErrors = function (arg: any) {
-
-        if (typeof arg === 'string') {
-            arg = [{ path: '', message: arg }];
+    // creates a json-parser friendly error response 
+    // and sends to client
+    express.response.sendErrors = function (statusCode: number, args: any) {
+        if (args.constructor.name === 'ZodError') {
+            const error = args as ZodError;
+            const errors: AppError[] = error.errors.map(({ path, message }) => ({ path: path.toString(), message }));
+            return this.status(statusCode).json({ success: false, errors });
         }
 
-        const errors: AppError[] = arg;
-
-        const messages = [];
-
-        for (const error of errors) {
-            const message = error.path + "|" + error.message
-            messages.push(message);
+        if (typeof args === 'string') {
+            return this.status(statusCode).json({ success: false, errors: [{ path: "", message: args }] });
         }
 
-        this.flash('errors', messages);
-        this.flash('last-request-body', JSON.stringify(this.body));
+    }
 
-    };
 
-    // This method sets the message in flash
-    // the message value is retrieved by the 'locals' middleware
-    express.request.setFlashMessage = function (message: string) {
-        this.flash('message', message);
+    // creates a json-parser friendly success response 
+    // containing the data and sends to client
+    express.response.sendData = function (statusCode: number, data: any, message?: string) {
+        const response: any = { success: true, data };
+        message && (response.message = message);
+        return this.status(statusCode).json(response);
+    }
+
+
+    // wraps the given message in a success response 
+    // and sends to client
+    express.response.sendMessage = function (message: string) {
+        return this.status(200).json({ success: true, message });
     }
 
 }

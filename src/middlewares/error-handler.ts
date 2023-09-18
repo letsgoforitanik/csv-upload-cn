@@ -6,5 +6,5 @@ import { Request, Response, NextFunction } from 'express';
 // redirect to internal-server-error page
 export default function errorHandler(error: any, request: Request, response: Response, next: NextFunction) {
     console.log(error);
-    return response.status(500).redirect('/internal-server-error');
+    return response.sendErrors(500, 'Internal server error');
 }

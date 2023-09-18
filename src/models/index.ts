@@ -1,3 +1,3 @@
-import CSV from "./csv";
+import Product from "./product";
 
-export { CSV };
+export { Product };

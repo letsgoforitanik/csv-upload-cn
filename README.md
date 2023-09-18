@@ -1,8 +1,6 @@
-# CSV Parser application for Coding Ninja
+# Ecommerce API application for Coding Ninja
 
-This is a sample csv parser application. The application parses `.csv` files and stores the file contents
-in database for future browsing. This application renders a `.csv` file in a tabular format while it also
-provides functionality for searching, sorting and paging.
+This is a sample Ecommerce API application. Admin can use this platform to manage product inventory.
 
 ## Install Application
 
